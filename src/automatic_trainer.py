@@ -1,4 +1,4 @@
-from src.prediction_model import train_and_save_model
+from prediction_model import train_and_save_model
 import time
 
 # List of tickers you want to train models for

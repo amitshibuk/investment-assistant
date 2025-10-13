@@ -11,3 +11,6 @@ python-dateutil
 matplotlib
 tensorflow
 dotenv
+spacy
+spellchecker
+seaborn

@@ -13,4 +13,3 @@ tensorflow
 dotenv
 spacy
 spellchecker
-seaborn

@@ -11,4 +11,5 @@ python-dateutil
 matplotlib
 tensorflow
 dotenv
-gensim
+spellchecker
+spacy

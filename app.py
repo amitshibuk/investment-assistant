@@ -170,7 +170,7 @@ def predict():
     company = entities.get('company')
     time_period = entities.get('time_period')
 
-    if task == 'predict' and metric == 'stock price' and company and time_period:
+    if task == 'predict' and 'stock' in metric and company and time_period:
         ticker = TICKER_MAP.get(company.capitalize())
         if not ticker:
             # Add the detected company name for better error feedback

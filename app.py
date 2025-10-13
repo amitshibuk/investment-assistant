@@ -80,6 +80,67 @@ def get_entities_with_llm(query):
         print(f"Error parsing Gemini API response: {e}")
         print(f"Raw response: {response.text}")
         return {"error": "Failed to parse API response."}
+    
+def summarize_predictions_with_llm(company, ticker, days_ahead, predictions_data):
+    """
+    Uses the Gemini API to generate a natural language summary of the prediction data.
+    """
+    # Calculate the overall trend and percentage change
+    start_price = predictions_data[0]['predicted_close']
+    end_price = predictions_data[-1]['predicted_close']
+    change = end_price - start_price
+    percent_change = (change / start_price) * 100 if start_price != 0 else 0
+    
+    trend = "an upward" if change > 0 else "a downward"
+    if abs(percent_change) < 1: # Consider small changes as stable
+        trend = "a relatively stable"
+
+    # The prompt provides context, data, and instructions for the LLM
+    system_prompt = f"""
+    You are a helpful financial analyst. Your task is to summarize stock price predictions in a concise, easy-to-understand paragraph.
+    - Start with a clear introductory sentence.
+    - Mention the overall trend (e.g., upward, downward, stable).
+    - State the predicted price at the beginning and end of the period.
+    - Mention the approximate percentage change over the period.
+    - Keep the tone informative but cautious.
+    - ALWAYS include this disclaimer at the end, on a new line: "Disclaimer: This is an AI-generated prediction and not financial advice."
+    """
+
+    # Create a user-friendly string from the prediction data
+    prediction_details = (
+        f"Company: {company} ({ticker})\n"
+        f"Prediction Period: {days_ahead} days\n"
+        f"Overall Trend: {trend} trend with a {percent_change:.2f}% change.\n"
+        f"Starting Predicted Price: ${start_price:.2f}\n"
+        f"Ending Predicted Price: ${end_price:.2f}\n"
+    )
+
+    try:
+        # We want a text response, not JSON, so we adjust the payload
+        payload = {
+            "contents": [{
+                "parts": [{"text": f"Please summarize these prediction details:\n\n{prediction_details}"}]
+            }],
+            "systemInstruction": {"parts": [{"text": system_prompt}]},
+            "generationConfig": {"responseMimeType": "text/plain"}
+        }
+        
+        headers = {'Content-Type': 'application/json'}
+        response = requests.post(GEMINI_API_URL, headers=headers, json=payload, timeout=45)
+        response.raise_for_status()
+
+        api_response = response.json()
+        summary = api_response['candidates'][0]['content']['parts'][0]['text']
+        return summary.strip()
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error calling Gemini API for summarization: {e}")
+        return "Could not generate a summary due to an API error."
+    except (KeyError, IndexError) as e:
+        print(f"Error parsing Gemini summarization response: {e}")
+        return "Could not generate a summary due to a response parsing error."
+
+
 
 @app.route('/')
 def home():
@@ -129,19 +190,25 @@ def predict():
         
         # 3. Load the pre-trained model and get the prediction
         try:
-            predictions = load_and_predict(ticker, days_ahead)
-            if predictions is None:
+            predictions_list = load_and_predict(ticker, days_ahead)
+            
+            if predictions_list is None:
                  return jsonify({"error": f"Could not generate prediction for {ticker}. The prediction model might not be available or trained."}), 500
             
+            formatted_predictions = [
+                {"day": i+1, "predicted_close": round(price, 2)}
+                for i, price in enumerate(predictions_list)
+            ]
+
+            summary = summarize_predictions_with_llm(company, ticker, days_ahead, formatted_predictions)
+
             # Format the successful response
             response = {
                 "company": company,
                 "ticker": ticker,
                 "days_ahead": days_ahead,
-                "predictions": [
-                    {"day": i+1, "predicted_close": round(price, 2)}
-                    for i, price in enumerate(predictions)
-                ]
+                "predictions": formatted_predictions,
+                "summary": summary
             }
             return jsonify(response)
 

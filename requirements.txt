@@ -10,3 +10,4 @@ python-Levenshtein
 python-dateutil
 matplotlib
 tensorflow
+dotenv

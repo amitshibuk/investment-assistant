@@ -11,3 +11,4 @@ python-dateutil
 matplotlib
 tensorflow
 dotenv
+gensim

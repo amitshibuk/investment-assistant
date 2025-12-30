@@ -2,8 +2,8 @@ import yfinance as yf
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
-from tensorflow.keras.models import Sequential, load_model
-from tensorflow.keras.layers import LSTM, Dense
+from tensorflow.keras.models import Sequential, load_model # type: ignore
+from tensorflow.keras.layers import LSTM, Dense # type: ignore
 import os
 
 # Ensure a 'models' directory exists to save/load models

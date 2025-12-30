@@ -130,8 +130,7 @@ def predict():
     company = entities.get('company')
     time_period = entities.get('time_period')
 
-    # 2. Validate Logic
-    if task == 'predict' and metric == 'stock price' and company:
+    if task == 'predict' and 'stock' in metric and company and time_period:
         ticker = TICKER_MAP.get(company.capitalize())
         if not ticker:
             return jsonify({"error": f"Company '{company}' not supported."}), 400

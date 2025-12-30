@@ -10,4 +10,7 @@ python-Levenshtein
 python-dateutil
 matplotlib
 tensorflow
+dotenv
+spellchecker
+spacy
 google-generativeai
